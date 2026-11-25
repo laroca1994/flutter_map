@@ -63,6 +63,20 @@ class InteractionOptions {
   /// gestures will take effect see [MultiFingerGesture] for custom settings
   final int pinchMoveWinGestures;
 
+  /// Whether a rotation may join a multi finger gesture that another gesture
+  /// already won.
+  ///
+  /// With [enableMultiFingerGestureRace], the first gesture past its threshold
+  /// wins and decides what the rest of the gesture does: by default, once the
+  /// pinch wins the map does not rotate until the fingers lift, however far
+  /// they turn. When true, the rotation joins as soon as the fingers have
+  /// turned [rotationThreshold] since the gesture started. The degrees up to
+  /// the threshold are not applied, so the map does not jump when it joins.
+  ///
+  /// Only takes effect if [enableMultiFingerGestureRace] is true and
+  /// [InteractiveFlag.rotate] is set. Defaults to false.
+  final bool rotationJoinsLate;
+
   /// The used velocity how fast the map should zoom in or out by scrolling
   /// with the scroll wheel of a mouse.
   final double scrollWheelVelocity;
@@ -133,6 +147,7 @@ class InteractionOptions {
     this.pinchMoveThreshold = 40.0,
     this.pinchMoveWinGestures =
         MultiFingerGesture.pinchZoom | MultiFingerGesture.pinchMove,
+    this.rotationJoinsLate = false,
     this.scrollWheelVelocity = 0.005,
     this.doubleTapDragZoomChangeCalculator =
         defaultDoubleTapDragZoomChangeCalculator,
@@ -180,6 +195,7 @@ class InteractionOptions {
       pinchZoomWinGestures == other.pinchZoomWinGestures &&
       pinchMoveThreshold == other.pinchMoveThreshold &&
       pinchMoveWinGestures == other.pinchMoveWinGestures &&
+      rotationJoinsLate == other.rotationJoinsLate &&
       scrollWheelVelocity == other.scrollWheelVelocity &&
       doubleTapDragZoomChangeCalculator ==
           other.doubleTapDragZoomChangeCalculator &&
@@ -199,6 +215,7 @@ class InteractionOptions {
         pinchZoomWinGestures,
         pinchMoveThreshold,
         pinchMoveWinGestures,
+        rotationJoinsLate,
         scrollWheelVelocity,
         doubleTapDragZoomChangeCalculator,
         doubleTapZoomDuration,

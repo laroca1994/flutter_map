@@ -67,6 +67,10 @@ class MapInteractiveViewerState extends State<MapInteractiveViewer>
   bool _isListeningForInterruptions = false;
 
   var _rotationStarted = false;
+
+  /// Whether the rotation joined a gesture that another gesture won: see
+  /// [InteractionOptions.rotationJoinsLate].
+  var _rotationJoinedLate = false;
   var _pinchZoomStarted = false;
   var _pinchMoveStarted = false;
   var _dragStarted = false;
@@ -484,12 +488,15 @@ class MapInteractiveViewerState extends State<MapInteractiveViewer>
 
   int _getMultiFingerGestureFlags(InteractionOptions interactionOptions) {
     if (interactionOptions.enableMultiFingerGestureRace) {
+      final late = _rotationJoinedLate && interactionOptions.rotationJoinsLate
+          ? MultiFingerGesture.rotate
+          : MultiFingerGesture.none;
       if (_gestureWinner == MultiFingerGesture.pinchZoom) {
-        return interactionOptions.pinchZoomWinGestures;
+        return interactionOptions.pinchZoomWinGestures | late;
       } else if (_gestureWinner == MultiFingerGesture.rotate) {
         return interactionOptions.rotationWinGestures;
       } else if (_gestureWinner == MultiFingerGesture.pinchMove) {
-        return interactionOptions.pinchMoveWinGestures;
+        return interactionOptions.pinchMoveWinGestures | late;
       }
 
       return MultiFingerGesture.none;
@@ -552,6 +559,7 @@ class MapInteractiveViewerState extends State<MapInteractiveViewer>
     _pinchZoomStarted = false;
     _pinchMoveStarted = false;
     _rotationStarted = false;
+    _rotationJoinedLate = false;
 
     _lastRotation = 0.0;
     _scaleCorrector = 0.0;
@@ -616,6 +624,17 @@ class MapInteractiveViewerState extends State<MapInteractiveViewer>
         // note: here we could reset to current values instead of last values
         _scaleCorrector = 1.0 - _lastScale;
       }
+    }
+
+    // The winner was decided by whichever threshold was passed first; fingers
+    // that go on to turn past theirs still mean a rotation.
+    if (hasGestureRace &&
+        _interactionOptions.rotationJoinsLate &&
+        !_rotationJoinedLate &&
+        _gestureWinner != MultiFingerGesture.none &&
+        _gestureWinner != MultiFingerGesture.rotate &&
+        currentRotation.abs() >= _interactionOptions.rotationThreshold) {
+      _rotationJoinedLate = true;
     }
 
     if (!hasGestureRace || _gestureWinner != MultiFingerGesture.none) {
