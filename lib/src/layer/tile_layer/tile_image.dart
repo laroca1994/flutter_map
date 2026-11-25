@@ -157,8 +157,18 @@ class TileImage extends ChangeNotifier {
   }
 
   void _onImageLoadSuccess(ImageInfo imageInfo, bool synchronousCall) {
+    if (_disposed) {
+      imageInfo.dispose();
+      return;
+    }
     loadError = false;
+    // Whoever receives an ImageInfo owns it and must dispose it: the previous
+    // one when a new one arrives (a reload in place), this one on dispose.
+    final previous = this.imageInfo;
     this.imageInfo = imageInfo;
+    if (previous != null && !identical(previous, imageInfo)) {
+      previous.dispose();
+    }
 
     if (!_disposed) {
       _display();
@@ -242,6 +252,8 @@ class TileImage extends ChangeNotifier {
 
     _animationController?.dispose();
     _imageStream?.removeListener(_listener);
+    imageInfo?.dispose();
+    imageInfo = null;
     super.dispose();
   }
 
